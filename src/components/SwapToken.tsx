@@ -208,10 +208,25 @@ export const SwapToken: FC<SwapTokenProps> = ({ onSuccess }) => {
 
     // Check balance
     const currentBalance = balances[fromToken];
+    
+    // Enhanced debugging for balance checking
+    console.log('🔄 Swap Balance Check Debug:');
+    console.log('  - From Token:', fromToken);
+    console.log('  - Swap Amount:', amountNum);
+    console.log('  - Current Balance:', currentBalance);
+    console.log('  - Balance Sufficient:', amountNum <= currentBalance);
+    
     if (amountNum > currentBalance) {
-      notify({ type: 'error', message: `Insufficient ${fromToken} balance!` });
+      console.log('❌ Insufficient balance for swap!');
+      notify({ 
+        type: 'error', 
+        message: `Insufficient ${fromToken} balance!`,
+        description: `Need ${amountNum} ${fromToken}. Current: ${currentBalance.toFixed(6)} ${fromToken}`
+      });
       return;
     }
+    
+    console.log('✅ Swap balance check passed!');
 
     if (useSmartContract) {
       await handleSmartContractSwap();

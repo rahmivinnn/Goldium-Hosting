@@ -34,10 +34,21 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const { autoConnect } = useAutoConnect();
     const { networkConfiguration } = useNetworkConfiguration();
     const network = networkConfiguration as WalletAdapterNetwork;
-    const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+    
+    // Use custom RPC endpoint from environment variables or fallback to default
+    const endpoint = useMemo(() => {
+        const customEndpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT;
+        if (customEndpoint) {
+            console.log('Using custom RPC endpoint:', customEndpoint);
+            return customEndpoint;
+        }
+        const defaultEndpoint = clusterApiUrl(network);
+        console.log('Using default RPC endpoint:', defaultEndpoint);
+        return defaultEndpoint;
+    }, [network]);
 
     console.log('Network:', network);
-    console.log('Endpoint:', endpoint);
+    console.log('Final Endpoint:', endpoint);
 
     const wallets = useMemo(
         () => [
@@ -65,8 +76,7 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
             // }),
             // new LedgerWalletAdapter(),
             
-            // Keep burner wallet for development/testing only
-            ...(process.env.NODE_ENV === 'development' ? [new UnsafeBurnerWalletAdapter()] : []),
+            // UnsafeBurnerWalletAdapter removed - use real wallet for balance detection
         ],
         [network]
     );

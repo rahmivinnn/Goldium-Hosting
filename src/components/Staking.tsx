@@ -83,10 +83,23 @@ export const Staking: FC<StakingProps> = ({ onSuccess }) => {
       return;
     }
 
+    // Enhanced debugging for balance checking
+    console.log('🥩 Staking Balance Check Debug:');
+    console.log('  - Stake Amount:', amount);
+    console.log('  - Current SOL Balance:', balances.SOL);
+    console.log('  - Balance Sufficient:', amount <= balances.SOL);
+    
     if (amount > balances.SOL) {
-      notify({ type: 'error', message: 'Insufficient SOL balance!' });
+      console.log('❌ Insufficient SOL balance for staking!');
+      notify({ 
+        type: 'error', 
+        message: 'Insufficient SOL balance!',
+        description: `Need ${amount} SOL. Current: ${balances.SOL.toFixed(6)} SOL`
+      });
       return;
     }
+    
+    console.log('✅ Staking balance check passed!');
 
     setActionType('stake');
     setShowConfirmation(true);

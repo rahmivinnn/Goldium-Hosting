@@ -130,9 +130,8 @@ export const SwapToken: FC<SwapTokenProps> = ({ onSuccess }) => {
       
       // Get quote from smart contract
       const contractQuote = await swapClient.getSwapQuote(
-        fromMint,
-        toMint,
-        fromAmountLamports
+        fromAmountLamports,
+        fromToken
       );
       
       if (!contractQuote) {
@@ -141,11 +140,10 @@ export const SwapToken: FC<SwapTokenProps> = ({ onSuccess }) => {
       
       // Execute swap
       const signature = await swapClient.swap(
-        fromMint,
-        toMint,
         fromAmountLamports,
-        contractQuote.expectedOutput * (1 - slippage / 10000), // Apply slippage
-        publicKey
+        contractQuote.amountOut * (1 - slippage / 10000), // Apply slippage
+        fromToken,
+        toToken
       );
       
       notify({ 
@@ -182,11 +180,14 @@ export const SwapToken: FC<SwapTokenProps> = ({ onSuccess }) => {
       }
       
     } catch (error: any) {
+      const errorSignature = error?.signature || null;
       notify({ 
         type: 'error', 
         message: 'Smart Contract Swap failed!',
-        description: error?.message || 'Unknown error occurred'
+        description: error?.message || 'Unknown error occurred',
+        txid: errorSignature
       });
+      setLastTxid(errorSignature);
       console.error('Smart Contract Swap error:', error);
     } finally {
       setIsLoading(false);
@@ -207,10 +208,25 @@ export const SwapToken: FC<SwapTokenProps> = ({ onSuccess }) => {
 
     // Check balance
     const currentBalance = balances[fromToken];
+    
+    // Enhanced debugging for balance checking
+    console.log('🔄 Swap Balance Check Debug:');
+    console.log('  - From Token:', fromToken);
+    console.log('  - Swap Amount:', amountNum);
+    console.log('  - Current Balance:', currentBalance);
+    console.log('  - Balance Sufficient:', amountNum <= currentBalance);
+    
     if (amountNum > currentBalance) {
-      notify({ type: 'error', message: `Insufficient ${fromToken} balance!` });
+      console.log('❌ Insufficient balance for swap!');
+      notify({ 
+        type: 'error', 
+        message: `Insufficient ${fromToken} balance!`,
+        description: `Need ${amountNum} ${fromToken}. Current: ${currentBalance.toFixed(6)} ${fromToken}`
+      });
       return;
     }
+    
+    console.log('✅ Swap balance check passed!');
 
     if (useSmartContract) {
       await handleSmartContractSwap();
@@ -250,7 +266,7 @@ export const SwapToken: FC<SwapTokenProps> = ({ onSuccess }) => {
       
       // Deserialize the transaction
       const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
-      const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+      const transaction = VersionedTransaction.deserialize(new Uint8Array(swapTransactionBuf));
       
       // Send transaction
       signature = await sendTransaction(transaction, connection);

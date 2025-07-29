@@ -63,14 +63,26 @@ export const SendToken: FC<SendTokenProps> = ({ onSuccess }) => {
     const currentBalance = balances[tokenType];
     const requiredAmount = tokenType === 'SOL' ? amountNum + estimatedFee : amountNum;
     
+    // Enhanced debugging for balance checking
+    console.log('💰 Balance Check Debug:');
+    console.log('  - Token Type:', tokenType);
+    console.log('  - Current Balance:', currentBalance);
+    console.log('  - Amount to Send:', amountNum);
+    console.log('  - Estimated Fee:', estimatedFee);
+    console.log('  - Required Amount:', requiredAmount);
+    console.log('  - Balance Sufficient:', requiredAmount <= currentBalance);
+    
     if (requiredAmount > currentBalance) {
+      console.log('❌ Insufficient balance detected!');
       notify({ 
         type: 'error', 
         message: `Insufficient ${tokenType} balance!`,
-        description: tokenType === 'SOL' ? `Need ${requiredAmount.toFixed(6)} SOL (including ${estimatedFee} SOL fee)` : undefined
+        description: tokenType === 'SOL' ? `Need ${requiredAmount.toFixed(6)} SOL (including ${estimatedFee} SOL fee). Current: ${currentBalance.toFixed(6)} SOL` : undefined
       });
       return false;
     }
+    
+    console.log('✅ Balance check passed!');
 
     return true;
   }, [recipient, amount, tokenType, balances, estimatedFee]);

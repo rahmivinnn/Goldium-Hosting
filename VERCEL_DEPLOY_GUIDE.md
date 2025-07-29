@@ -1,10 +1,5 @@
 # 🚀 PANDUAN DEPLOY OTOMATIS KE VERCEL
 
-## Status Deployment:
-✅ **GitHub Repository**: https://github.com/rahmivinnn/Goldium-Hosting.git
-✅ **Project sudah di-push ke GitHub**
-✅ **Vercel CLI sudah terinstall**
-
 ## 📋 Langkah-langkah Deploy (Super Mudah!):
 
 ### 🎯 Metode 1: Upload Folder (Paling Mudah)

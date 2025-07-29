@@ -51,8 +51,21 @@ export const AdvancedDashboard: FC = () => {
   });
 
   useEffect(() => {
+    console.log('🔍 AdvancedDashboard: Wallet status check...');
+    console.log('📱 Wallet connected:', wallet.connected);
+    console.log('🔑 Wallet publicKey:', wallet.publicKey?.toString());
+    console.log('🌐 Connection endpoint:', connection?.rpcEndpoint);
+    console.log('🔗 Connection status:', !!connection);
+    
+    if (wallet.publicKey && wallet.connected) {
+      console.log('✅ AdvancedDashboard: Wallet connected, fetching balances...', wallet.publicKey.toString());
+      getAllTokenBalances(wallet.publicKey, connection);
+    } else {
+      console.log('❌ AdvancedDashboard: Wallet not connected or no publicKey');
+      console.log('💡 Tip: Connect a real wallet (Phantom, Solflare, etc.) to see your actual balances');
+    }
+    
     if (wallet.publicKey) {
-      console.log('🔄 AdvancedDashboard: Wallet connected, fetching balances...', wallet.publicKey.toString());
       getAllTokenBalances(wallet.publicKey, connection);
       
       // Aggressive refresh for GOLD detection
@@ -146,6 +159,24 @@ export const AdvancedDashboard: FC = () => {
           <div className="space-y-6">
             {/* Balance Tracker for Real-time Detection */}
             <BalanceTracker refreshInterval={5000} />
+            
+            {!wallet.connected && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-yellow-900/50 to-orange-900/50 backdrop-blur-sm border border-yellow-500/50 rounded-xl p-4 mb-6"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                    <span className="text-yellow-400 text-lg">⚠️</span>
+                  </div>
+                  <div>
+                    <h3 className="text-yellow-400 font-semibold">Wallet Not Connected</h3>
+                    <p className="text-yellow-200/80 text-sm">Connect your wallet (Phantom, Solflare, etc.) to view your actual SOL and GOLD balances</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
             
             {/* Portfolio Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

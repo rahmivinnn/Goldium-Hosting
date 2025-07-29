@@ -96,6 +96,22 @@ const useTokenBalanceStore = create<TokenBalanceStore>((set, get) => ({
   },
   
   getAllTokenBalances: async (publicKey, connection) => {
+    console.log('🔄 Starting getAllTokenBalances...');
+    console.log('📍 Wallet publicKey:', publicKey?.toBase58());
+    console.log('🌐 Connection endpoint:', connection?.rpcEndpoint);
+    
+    if (!publicKey) {
+      console.error('❌ No wallet publicKey provided');
+      set({ isLoading: false });
+      return;
+    }
+    
+    if (!connection) {
+      console.error('❌ No connection provided');
+      set({ isLoading: false });
+      return;
+    }
+    
     set({ isLoading: true });
     
     try {
@@ -161,7 +177,11 @@ const useTokenBalanceStore = create<TokenBalanceStore>((set, get) => ({
         isLoading: false,
       });
       
-      console.log('✅ All token balances updated successfully:', { SOL: solAmount, GOLD: goldAmount });
+      console.log('✅ All token balances updated successfully:');
+      console.log('  - SOL Balance:', solAmount.toFixed(6), 'SOL');
+      console.log('  - GOLD Balance:', goldAmount.toFixed(6), 'GOLD');
+      console.log('  - Last Updated:', new Date().toLocaleTimeString());
+      console.log('  - Wallet Address:', publicKey.toBase58().slice(0, 8) + '...');
       
       // Show success notification
       console.log('🎉 Balance update completed!');
