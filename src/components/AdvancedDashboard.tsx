@@ -16,6 +16,7 @@ import { RealTimeMarketDashboard } from './RealTimeMarketDashboard';
 import { useNetworkConfiguration } from '../contexts/NetworkConfigurationProvider';
 import { SOLSCAN_CONFIG, TOKENS } from '../config/tokens';
 import useTokenBalanceStore from '../stores/useTokenBalanceStore';
+import { BalanceTracker } from './BalanceTracker';
 import { motion } from 'framer-motion';
 
 type TabType = 'overview' | 'trade' | 'stake' | 'send' | 'history' | 'analytics' | 'portfolio' | 'notifications' | 'market';
@@ -51,7 +52,28 @@ export const AdvancedDashboard: FC = () => {
 
   useEffect(() => {
     if (wallet.publicKey) {
+      console.log('🔄 AdvancedDashboard: Wallet connected, fetching balances...', wallet.publicKey.toString());
       getAllTokenBalances(wallet.publicKey, connection);
+      
+      // Aggressive refresh for GOLD detection
+      const timeouts = [
+        setTimeout(() => {
+          console.log('🔄 AdvancedDashboard: Secondary refresh (3s)');
+          getAllTokenBalances(wallet.publicKey, connection);
+        }, 3000),
+        setTimeout(() => {
+          console.log('🔄 AdvancedDashboard: Tertiary refresh (8s)');
+          getAllTokenBalances(wallet.publicKey, connection);
+        }, 8000),
+        setTimeout(() => {
+          console.log('🔄 AdvancedDashboard: Final refresh (15s)');
+          getAllTokenBalances(wallet.publicKey, connection);
+        }, 15000)
+      ];
+      
+      return () => {
+        timeouts.forEach(timeout => clearTimeout(timeout));
+      };
     }
   }, [wallet.publicKey, connection, getAllTokenBalances]);
 
@@ -122,6 +144,9 @@ export const AdvancedDashboard: FC = () => {
       case 'overview':
         return (
           <div className="space-y-6">
+            {/* Balance Tracker for Real-time Detection */}
+            <BalanceTracker refreshInterval={5000} />
+            
             {/* Portfolio Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <motion.div 
@@ -292,6 +317,22 @@ export const AdvancedDashboard: FC = () => {
                   <div className="relative z-10 flex flex-col items-center justify-center gap-2">
                     <span className="group-hover:animate-twinkle group-hover:scale-110 transition-transform duration-300 text-xl">🔔</span>
                     <span className="text-sm">Alerts</span>
+                  </div>
+                </button>
+                <button 
+                  onClick={() => {
+                    if (wallet.publicKey) {
+                      console.log('🔄 Manual refresh triggered by user');
+                      getAllTokenBalances(wallet.publicKey, connection);
+                      setTimeout(() => getAllTokenBalances(wallet.publicKey, connection), 2000);
+                    }
+                  }}
+                  className="group relative p-4 bg-gradient-to-r from-cyan-600 to-cyan-700 rounded-lg text-white font-medium hover:from-cyan-700 hover:to-cyan-800 transition-all duration-300 overflow-hidden hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/30 animate-morphing animation-delay-3000"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 to-blue-400/0 group-hover:from-cyan-400/20 group-hover:to-blue-400/20 transition-all duration-300 animate-hologram"></div>
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-2">
+                    <span className="group-hover:animate-twinkle group-hover:scale-110 transition-transform duration-300 text-xl">🔄</span>
+                    <span className="text-sm">Refresh</span>
                   </div>
                 </button>
                 <button 

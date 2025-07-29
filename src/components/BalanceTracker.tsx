@@ -13,7 +13,7 @@ interface BalanceTrackerProps {
 
 export const BalanceTracker: FC<BalanceTrackerProps> = ({ 
   autoRefresh = true, 
-  refreshInterval = 30000 // 30 seconds
+  refreshInterval = 10000 // 10 seconds for better detection
 }) => {
   const { publicKey } = useWallet();
   const { connection } = useConnection();
@@ -48,6 +48,19 @@ export const BalanceTracker: FC<BalanceTrackerProps> = ({
     }
   }, [publicKey, connection, getAllTokenBalances, fetchPriceData]);
 
+  // Manual refresh function with force refresh
+  const handleRefresh = async () => {
+    if (publicKey && connection) {
+      console.log('🔄 Manual refresh triggered for wallet:', publicKey.toBase58());
+      await getAllTokenBalances(publicKey, connection);
+      // Force a second refresh after 2 seconds to ensure detection
+      setTimeout(async () => {
+        console.log('🔄 Secondary refresh triggered');
+        await getAllTokenBalances(publicKey, connection);
+      }, 2000);
+    }
+  };
+
   // Auto-refresh effect
   useEffect(() => {
     if (autoRefresh && publicKey) {
@@ -56,12 +69,39 @@ export const BalanceTracker: FC<BalanceTrackerProps> = ({
     }
   }, [autoRefresh, publicKey, refreshBalances, refreshInterval]);
 
-  // Initial load
+  // Initial load effect with enhanced detection
   useEffect(() => {
-    if (publicKey) {
-      refreshBalances();
+    if (publicKey && connection) {
+      console.log('🚀 Wallet connected, fetching balances for:', publicKey.toBase58());
+      getAllTokenBalances(publicKey, connection);
+      fetchPriceData();
+      
+      // Enhanced detection with multiple delayed refreshes
+      const timeouts = [
+        setTimeout(async () => {
+          console.log('🔄 Delayed refresh for better token detection');
+          await getAllTokenBalances(publicKey, connection);
+        }, 3000),
+        setTimeout(async () => {
+          console.log('🔄 Extended refresh for complete token detection');
+          await getAllTokenBalances(publicKey, connection);
+        }, 10000)
+      ];
+      
+      // Listen for balance update events
+      const handleBalanceUpdate = (event: CustomEvent) => {
+        console.log('🎉 BalanceTracker: Balance update event received!', event.detail);
+        setLastUpdated(new Date());
+      };
+      
+      window.addEventListener('balanceUpdated', handleBalanceUpdate as EventListener);
+      
+      return () => {
+        timeouts.forEach(timeout => clearTimeout(timeout));
+        window.removeEventListener('balanceUpdated', handleBalanceUpdate as EventListener);
+      };
     }
-  }, [publicKey, refreshBalances]);
+  }, [publicKey, connection, getAllTokenBalances, fetchPriceData]);
 
   const getSolscanAccountUrl = () => {
     if (!publicKey) return '#';
@@ -106,7 +146,7 @@ export const BalanceTracker: FC<BalanceTrackerProps> = ({
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            onClick={refreshBalances}
+            onClick={handleRefresh}
             disabled={isLoading}
             className="p-2 text-gray-300 hover:text-white transition-all duration-300 disabled:opacity-50 rounded-full hover:bg-purple-600/20 neon-purple"
             title="Refresh balances"
